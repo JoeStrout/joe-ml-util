@@ -1,7 +1,7 @@
-# This script takes a path (local file or gs: path) to an ONNX model,
-# loads that model, and then prints some basic info about it.
+# This script takes a path (local file or gs: path) to an ONNX model, loads that
+# model (as an ONNX Runtime session), and then prints some basic info about it.
 
-import onnx
+import onnxruntime
 import io
 from google.cloud import storage
 import sys
@@ -13,7 +13,7 @@ def download_model_from_gcs(gcs_path):
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(source_blob_name)
     model_data = blob.download_as_bytes()
-    model = onnx.load_model(io.BytesIO(model_data))
+    model = onnxruntime.InferenceSession(io.BytesIO(model_data).read())
     return model
 
 def load_model(model_path):
@@ -22,22 +22,22 @@ def load_model(model_path):
         model = download_model_from_gcs(model_path)
     else:
         print(f"Loading model from local file system: {model_path}")
-        model = onnx.load(model_path)
+        model = onnxruntime.InferenceSession(model_path)
     return model
 
 def check_model(model):
     # Check the model's inputs
-    for input in model.graph.input:
+    for input in model.get_inputs():
         input_name = input.name
-        input_shape = [dim.dim_value for dim in input.type.tensor_type.shape.dim]
-        input_type = input.type.tensor_type.elem_type
+        input_shape = input.shape
+        input_type = input.type
         print(f'Input: {input_name}, Shape: {input_shape}, Type: {input_type}')
 
     # Check the model's outputs
-    for output in model.graph.output:
+    for output in model.get_outputs():
         output_name = output.name
-        output_shape = [dim.dim_value for dim in output.type.tensor_type.shape.dim]
-        output_type = output.type.tensor_type.elem_type
+        output_shape = output.shape
+        output_type = output.type
         print(f'Output: {output_name}, Shape: {output_shape}, Type: {output_type}')
 
 if __name__ == "__main__":
