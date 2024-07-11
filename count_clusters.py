@@ -1,6 +1,7 @@
 """
 Given a path to a precomputed volume containing a segmentation layer, this reports
-on the number and range of segment IDs therein.
+on the number and range of segment IDs therein.  Or, given a path to a Neuroglancer
+state, it reports on the segments of every segmentation layer in that state.
 """
 
 from zetta_utils.layer.volumetric.cloudvol import build_cv_layer
