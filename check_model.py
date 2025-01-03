@@ -4,26 +4,13 @@
 import onnxruntime
 import io
 from google.cloud import storage
+from cloudfiles import CloudFile
 import sys
 
-def download_model_from_gcs(gcs_path):
-    bucket_name = gcs_path.split('/')[2]
-    source_blob_name = '/'.join(gcs_path.split('/')[3:])
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(bucket_name)
-    blob = bucket.blob(source_blob_name)
-    model_data = blob.download_as_bytes()
-    model = onnxruntime.InferenceSession(io.BytesIO(model_data).read())
-    return model
-
 def load_model(model_path):
-    if model_path.startswith("gs:"):
-        print(f"Loading model from Google Cloud Storage: {model_path}")
-        model = download_model_from_gcs(model_path)
-    else:
-        print(f"Loading model from local file system: {model_path}")
-        model = onnxruntime.InferenceSession(model_path)
-    return model
+    cf = CloudFile(model_path)
+    print(f'Loaded file ({cf.size()} bytes) from {model_path}')
+    return onnxruntime.InferenceSession(cf.get())
 
 def check_model(model):
     # Check the model's inputs
